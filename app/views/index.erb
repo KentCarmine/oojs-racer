@@ -1,0 +1,22 @@
+<div class="container">
+  <h1>Welcome to Ruby Racer!</h1>
+  <p>Please enter your initials!</p>
+  <form name="new_game" action="/" method="POST">
+    Player1:<input type="text" name="player1">
+    Player2:<input type="text" name="player2">
+    <input type="submit" value="Start Game!">
+  </form>
+  <br>
+</div>
+
+<div class="container">
+  <%Game.all.each do |game|%>
+    <% players = game.users %>
+    <strong>Game At: </strong><%=game.created_at%> <br>
+    <strong>Players:  </strong><%=players[0].name%> vs. <%= players[1].name%> <br>
+    <% winner = User.where("id = ?", game.winner_id).first %>
+    <strong>Winner:  </strong><%=winner.name%><br>
+    <strong>Seconds Played:  </strong><%= game.time_played%><br>
+    <br> <br>
+  <%end%>
+</div>

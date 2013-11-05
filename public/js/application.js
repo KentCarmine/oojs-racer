@@ -2,8 +2,9 @@ $(document).ready(function() {
   // console.log("JS running!")
 
   //Player Constructor
-  function Player(identifier, position, keyCode) {
+  function Player(identifier, symbol, position, keyCode) {
     this.identifier = identifier;
+    this.symbol = symbol;
     this.position = position;
     this.keyCode = keyCode;
   }
@@ -26,15 +27,7 @@ $(document).ready(function() {
 
   // Get the appropriate symbol to represent this player on the board.
   Player.prototype.getSymbol = function() {
-    if (this.identifier == "player_1") {
-      return "a"
-    }
-    else if (this.identifier == "player_2") {
-      return "b"
-    }
-    else {
-      return "x"
-    }
+    return this.symbol
   }
 
   // Return true if this player has won, return false otherwise.
@@ -58,13 +51,19 @@ $(document).ready(function() {
 
   // Game Constructor
   function Game(player_1, player_2) {
-    this.player_1 = new Player("player_1", 0, 81);
-    this.player_2 = new Player("player_2", 0, 80);
+    this.player_1 = new Player("player_1", "a", 0, 81);
+    this.player_2 = new Player("player_2", "b", 0, 80);
+    this.finished = false;
   }
 
   // End the game, storing the time that it ended.
-  Game.prototype.setEndTime = function() {
+  Game.prototype.setFinished = function() {
     this.endTime = new Date();
+    this.finished = true;
+  }
+
+  Game.prototype.isFinished = function() {
+    return this.finished;
   }
 
   // Return the number of seconds the game was played.
@@ -82,7 +81,6 @@ $(document).ready(function() {
 
   // Handle the keyUp event appropriately for each player.
   Game.prototype.onKeyUp = function(keyCode)  {
-    // console.log("in onKeyUp THIS is: " + this)
     if (keyCode == this.player_1.getKeyCode()) {
       this.player_1.updatePosition();
     }
@@ -106,26 +104,27 @@ $(document).ready(function() {
     thisGame = this;
 
     $(document).on('keyup', function(event) {
+      if (!thisGame.isFinished()) { // Ensure that players cannot move or post to server if the game is already over and a post is in progress.
+        thisGame.onKeyUp(event.which);
 
-      thisGame.onKeyUp(event.which);
 
 
+        if(thisGame.player_1.isVictorious()) {
+          thisGame.setFinished();
 
-      if(thisGame.player_1.isVictorious()) {
-        thisGame.setEndTime();
+          var winningPlayer = thisGame.player_1.getIdentifier();
+          var timePlayed = thisGame.secondsPlayed();
 
-        var winningPlayer = thisGame.player_1.getIdentifier();
-        var timePlayed = thisGame.secondsPlayed();
+          thisGame.postToServer(winningPlayer, timePlayed);
+        }
+        else if (thisGame.player_2.isVictorious()) {
+          thisGame.setFinished();
 
-        thisGame.postToServer(winningPlayer, timePlayed);
-      }
-      else if (thisGame.player_2.isVictorious()) {
-        thisGame.setEndTime();
+          var winningPlayer = thisGame.player_2.getIdentifier();
+          var timePlayed = thisGame.secondsPlayed();
 
-        var winningPlayer = thisGame.player_2.getIdentifier();
-        var timePlayed = thisGame.secondsPlayed();
-
-        thisGame.postToServer(winningPlayer, timePlayed);
+          thisGame.postToServer(winningPlayer, timePlayed);
+        }
       }
     });
   }
